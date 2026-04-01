@@ -1,13 +1,37 @@
 {
   "name": "usdc-to-bitcoin-poc",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "PoC for LendaSwap: USDC (Arbitrum) to Bitcoin on-chain atomic swap",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "start": "tsx src/index.ts",
+    "dev": "tsx src/index.ts",
+    "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
+    "format": "biome format --write src/"
   },
-  "keywords": [],
+  "keywords": [
+    "usdc",
+    "bitcoin",
+    "swap",
+    "atomic-swap",
+    "arbitrum"
+  ],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "module",
+  "dependencies": {
+    "@lendasat/lendaswap-sdk-pure": "^0.2.16",
+    "better-sqlite3": "^12.8.0",
+    "dotenv": "^17.4.0",
+    "ethers": "^6.16.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.10",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.5.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  }
 }

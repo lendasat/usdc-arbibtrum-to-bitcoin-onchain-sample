@@ -1,3 +1,7 @@
+# Project-specific
+*.db
+dist/
+
 # Created by https://www.toptal.com/developers/gitignore/api/webstorm+all,node,macos
 # Edit at https://www.toptal.com/developers/gitignore?templates=webstorm+all,node,macos
 
