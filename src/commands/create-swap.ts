@@ -1,4 +1,4 @@
-import { Asset } from "@lendasat/lendaswap-sdk-pure";
+import { Asset, type Chain } from "@lendasat/lendaswap-sdk-pure";
 import {
   formatUsdc,
   getUsdcBalance,
@@ -22,7 +22,44 @@ export async function createSwap(
   console.log(`Bitcoin destination: ${btcAddress}`);
   console.log(`Your deposit address: ${evmAddress}`);
 
-  // Step 1: Check current balance
+  // Step 1: Get quote and validate amount
+  console.log(`\nFetching quote...`);
+  const quote = await client.getQuote({
+    sourceChain: Asset.USDC_ARBITRUM.chain as Chain,
+    sourceToken: Asset.USDC_ARBITRUM.tokenId,
+    targetChain: Asset.BTC_ONCHAIN.chain as Chain,
+    targetToken: Asset.BTC_ONCHAIN.tokenId,
+    sourceAmount: Number(sourceAmount),
+  });
+
+  const minSourceUsdc = formatUsdc(BigInt(quote.source_amount));
+  console.log(`\n--- Quote ---`);
+  console.log(`  You send:       ${minSourceUsdc} USDC`);
+  console.log(`  You receive:    ~${quote.target_amount} sats`);
+  console.log(
+    `  Protocol fee:   ${quote.protocol_fee} sats (${(quote.protocol_fee_rate * 100).toFixed(2)}%)`,
+  );
+
+  // exchange_rate is USDC per BTC, so: min_sats / 1e8 * rate = min USDC (human)
+  const rate = Number(quote.exchange_rate);
+  const minUsdc = BigInt(Math.ceil((quote.min_amount / 1e8) * rate * 1e6));
+  const maxUsdc = BigInt(Math.ceil((quote.max_amount / 1e8) * rate * 1e6));
+
+  const targetSats = Number(quote.target_amount);
+  if (targetSats < quote.min_amount) {
+    console.error(
+      `\nAmount too low. Minimum is ${quote.min_amount} sats (~${formatUsdc(minUsdc)} USDC).`,
+    );
+    process.exit(1);
+  }
+  if (targetSats > quote.max_amount) {
+    console.error(
+      `\nAmount too high. Maximum is ${quote.max_amount} sats (~${formatUsdc(maxUsdc)} USDC).`,
+    );
+    process.exit(1);
+  }
+
+  // Step 2: Check balance and wait for deposit
   console.log(`\nChecking USDC balance on Arbitrum...`);
   const currentBalance = await getUsdcBalance(evmAddress);
   console.log(`Current balance: ${formatUsdc(currentBalance)} USDC`);

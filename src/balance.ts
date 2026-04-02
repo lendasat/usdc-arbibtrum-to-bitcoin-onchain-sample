@@ -1,4 +1,4 @@
-import {ethers} from "ethers";
+import { ethers } from "ethers";
 
 const ARBITRUM_RPC = "https://arb1.arbitrum.io/rpc";
 const USDC_ADDRESS = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
