@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { showAddress } from "./commands/address.js";
+import { continueSwap } from "./commands/continue-swap.js";
 import { createSwap } from "./commands/create-swap.js";
 import { listSwaps } from "./commands/list.js";
 import { recoverSwaps } from "./commands/recover.js";
@@ -11,15 +12,17 @@ function printUsage() {
 Usage: npm start -- <command> [args]
 
 Commands:
-  swap <amount> <btc-address> [fee-rate]   Create a USDC→BTC swap (fee-rate in sat/vB, default: 2)
-  list                                 List all stored swaps
-  status <swap-id>                     Check swap status
-  refund <swap-id>                     Refund a swap
-  recover                              Recover swaps from server
-  address                              Show wallet address and balance
+  swap <amount> <btc-address> [fee-rate]   Create a USDC→BTC swap (fee-rate in sat/vB, default: 1)
+  continue <swap-id> [fee-rate]            Resume an interrupted swap
+  list                                     List all stored swaps
+  status <swap-id>                         Check swap status
+  refund <swap-id>                         Refund a swap
+  recover                                  Recover swaps from server
+  address                                  Show wallet address and balance
 
 Examples:
   npm start -- swap 100 bc1q...
+  npm start -- continue <swap-id>
   npm start -- list
   npm start -- status <swap-id>
   npm start -- refund <swap-id>
@@ -42,6 +45,14 @@ async function main() {
           args[2],
           args[3] ? Number(args[3]) : undefined,
         );
+        break;
+
+      case "continue":
+        if (args.length < 2) {
+          console.error("Usage: continue <swap-id> [fee-rate]");
+          process.exit(1);
+        }
+        await continueSwap(args[1], args[2] ? Number(args[2]) : undefined);
         break;
 
       case "list":

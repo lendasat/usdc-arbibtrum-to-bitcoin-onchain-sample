@@ -6,6 +6,7 @@ import {
   waitForUsdcDeposit,
 } from "../balance.js";
 import { asEvmToBtc, buildClient, waitForSwapStatus } from "../client.js";
+import { claimWithRetries } from "./claim.js";
 import { printSwapStatus } from "./status.js";
 
 export async function createSwap(
@@ -104,19 +105,7 @@ export async function createSwap(
   console.log(`Bitcoin locked by server!`);
 
   // Step 5: Claim BTC (0-conf)
-  console.log(`\nClaiming Bitcoin (0-conf)...`);
-  const claimResult = await client.claim(swapId, {
-    destinationAddress: btcAddress,
-    feeRateSatPerVb: feeRate,
-  });
-
-  if (claimResult.success) {
-    console.log(`\n=== Swap Complete ===`);
-    console.log(`Message: ${claimResult.message}`);
-  } else {
-    console.error(`\nClaim failed: ${claimResult.message}`);
-    console.log(`Swap ID: ${swapId} (saved locally for recovery)`);
-  }
+  await claimWithRetries(client, swapId, btcAddress, feeRate);
 
   const finalSwap = asEvmToBtc(
     await client.getSwap(swapId, { updateStorage: true }),
