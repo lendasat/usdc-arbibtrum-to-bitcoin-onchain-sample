@@ -116,23 +116,6 @@ mnemonic, you can recover swap history from the server:
 npm start -- recover
 ```
 
-## Project structure
-
-```
-src/
-  index.ts              CLI router
-  client.ts             LendaSwap client setup and swap status helpers
-  env.ts                Mnemonic management (.env persistence)
-  balance.ts            USDC balance checking on Arbitrum
-  commands/
-    create-swap.ts      Main swap flow (deposit -> fund -> claim)
-    list.ts             List stored swaps
-    status.ts           Check swap status with transaction IDs
-    refund.ts           Collaborative gasless refund
-    recover.ts          Recover swaps from server
-    address.ts          Show wallet info and balance
-```
-
 ## Configuration
 
 See [`.env.example`](.env.example) for available configuration options:
