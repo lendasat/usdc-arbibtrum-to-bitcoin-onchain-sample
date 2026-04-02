@@ -6,6 +6,7 @@ import { listSwaps } from "./commands/list.js";
 import { recoverSwaps } from "./commands/recover.js";
 import { refundSwap } from "./commands/refund.js";
 import { checkStatus } from "./commands/status.js";
+import { withdraw } from "./commands/withdraw.js";
 
 function printUsage() {
   console.log(`
@@ -17,12 +18,15 @@ Commands:
   list                                     List all stored swaps
   status <swap-id>                         Check swap status
   refund <swap-id>                         Refund a swap
+  withdraw <address> [amount]               Send USDC to another wallet (default: full balance)
   recover                                  Recover swaps from server
   address                                  Show wallet address and balance
 
 Examples:
   npm start -- swap 100 bc1q...
   npm start -- continue <swap-id>
+  npm start -- withdraw 0xAbCd...
+  npm start -- withdraw 0xAbCd... 50
   npm start -- list
   npm start -- status <swap-id>
   npm start -- refund <swap-id>
@@ -73,6 +77,14 @@ async function main() {
           process.exit(1);
         }
         await refundSwap(args[1]);
+        break;
+
+      case "withdraw":
+        if (args.length < 2) {
+          console.error("Usage: withdraw <address> [amount]");
+          process.exit(1);
+        }
+        await withdraw(args[1], args[2]);
         break;
 
       case "recover":

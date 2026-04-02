@@ -36,7 +36,8 @@ export function parseUsdc(amount: string): bigint {
 export async function getArbitrumBlockTimestamp(): Promise<number> {
   const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
   const block = await provider.getBlock("latest");
-  return block!.timestamp;
+  if (!block) throw new Error("Failed to fetch latest Arbitrum block");
+  return block.timestamp;
 }
 
 /**
