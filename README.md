@@ -1,8 +1,10 @@
 # USDC to Bitcoin PoC
 
-A CLI proof-of-concept for [LendaSwap](https://docs.satora.io/) that performs **gasless USDC (Arbitrum) to Bitcoin on-chain** atomic swaps.
+A CLI proof-of-concept for [LendaSwap](https://docs.satora.io/) that performs **gasless USDC (Arbitrum) to Bitcoin
+on-chain** atomic swaps.
 
-The user never pays EVM gas fees. All EVM transactions are submitted by the LendaSwap relay server using [Permit2](https://github.com/Uniswap/permit2) signatures.
+The user never pays EVM gas fees. All EVM transactions are submitted by the LendaSwap relay server
+using [Permit2](https://github.com/Uniswap/permit2) signatures.
 
 ## How it works
 
@@ -66,7 +68,7 @@ Bitcoin destination: bc1qMyBitcoinAddress
 Your deposit address: 0xAbCd...
 
 Checking USDC balance on Arbitrum...
-Current balance: 150.0 USDC
+Current balance: 100.0 USDC
 
 Funds available! Creating swap...
 Swap created: a1b2c3d4-...
@@ -92,19 +94,23 @@ Claiming Bitcoin (0-conf)...
 
 ## Refunds
 
-If a swap fails or you want to cancel, use the `refund` command:
+If a swap fails, use the `refund` command:
 
 ```bash
 npm start -- refund <swap-id>
 ```
 
-This performs a **collaborative gasless refund** -- the server cosigns and submits the refund transaction, so you don't need to wait for the HTLC timelock to expire and you don't pay gas.
+This performs a **collaborative gasless refund** -- the server cosigns and submits the refund transaction, so you don't
+need to wait for the HTLC timelock to expire and you don't pay gas.
 
-**Important:** Refunded funds are returned to the **internal wallet** (the EVM address derived from your mnemonic), **not** to the original wallet that sent the USDC. You can check the internal wallet balance with `npm start -- address` and transfer the funds out manually.
+**Important:** Refunded funds are returned to the **internal wallet** (the EVM address derived from your mnemonic), *
+*not** to the original wallet that sent the USDC. You can check the internal wallet balance with `npm start -- address`
+and transfer the funds out manually.
 
 ## Recovery
 
-All swap state is persisted in a local SQLite database (`lendaswap.db`). If you lose the database but still have your mnemonic, you can recover swap history from the server:
+All swap state is persisted in a local SQLite database (`lendaswap.db`). If you lose the database but still have your
+mnemonic, you can recover swap history from the server:
 
 ```bash
 npm start -- recover
