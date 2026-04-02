@@ -31,6 +31,15 @@ export function parseUsdc(amount: string): bigint {
 }
 
 /**
+ * Get the current block timestamp on Arbitrum.
+ */
+export async function getArbitrumBlockTimestamp(): Promise<number> {
+  const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
+  const block = await provider.getBlock("latest");
+  return block!.timestamp;
+}
+
+/**
  * Poll for USDC balance to reach a minimum amount.
  * Returns once balance >= minAmount.
  */
