@@ -1,11 +1,15 @@
 import "dotenv/config";
 import { showAddress } from "./commands/address.js";
-import { continueSwap } from "./commands/continue-swap.js";
-import { createSwap } from "./commands/create-swap.js";
+import { continueUsdcToBitcoinSwap } from "./commands/continue-usdc-to-btc.js";
 import { listSwaps } from "./commands/list.js";
 import { recoverSwaps } from "./commands/recover.js";
 import { refundSwap } from "./commands/refund.js";
 import { checkStatus } from "./commands/status.js";
+import {
+  continueBitcoinToUsdcSwap,
+  createBitcoinToUsdcSwap,
+} from "./commands/swap-btc-to-usdc.js";
+import { createUsdcToBitcoinSwap } from "./commands/swap-usdc-to-btc.js";
 import { withdraw } from "./commands/withdraw.js";
 
 function printUsage() {
@@ -13,18 +17,26 @@ function printUsage() {
 Usage: npm start -- <command> [args]
 
 Commands:
-  swap <amount> <btc-address> [fee-rate]   Create a USDC→BTC swap (fee-rate in sat/vB, default: 1)
-  continue <swap-id> [fee-rate]            Resume an interrupted swap
+  swap usdc-to-btc create <amount-usdc> <btc-address> [fee-rate]
+                                           Create a USDC -> BTC on-chain swap
+  swap usdc-to-btc continue <swap-id> [fee-rate]
+                                           Resume a USDC -> BTC on-chain swap
+  swap btc-to-usdc create <amount-sats> <evm-address>
+                                           Create a BTC on-chain -> USDC swap
+  swap btc-to-usdc continue <swap-id>
+                                           Resume a BTC on-chain -> USDC swap
   list                                     List all stored swaps
   status <swap-id>                         Check swap status
   refund <swap-id>                         Refund a swap
-  withdraw <address> [amount]               Send USDC to another wallet (default: full balance)
+  withdraw <address> [amount]              Send USDC to another wallet (default: full balance)
   recover                                  Recover swaps from server
   address                                  Show wallet address and balance
 
 Examples:
-  npm start -- swap 100 bc1q...
-  npm start -- continue <swap-id>
+  npm start -- swap usdc-to-btc create 100 bc1q...
+  npm start -- swap usdc-to-btc continue <swap-id>
+  npm start -- swap btc-to-usdc create 150000 0xAbCd...
+  npm start -- swap btc-to-usdc continue <swap-id>
   npm start -- withdraw 0xAbCd...
   npm start -- withdraw 0xAbCd... 50
   npm start -- list
@@ -41,22 +53,12 @@ async function main() {
     switch (command) {
       case "swap":
         if (args.length < 3) {
-          console.error("Usage: swap <amount> <btc-address> [fee-rate]");
+          console.error(
+            "Usage: swap <usdc-to-btc|btc-to-usdc> <create|continue> ...",
+          );
           process.exit(1);
         }
-        await createSwap(
-          args[1],
-          args[2],
-          args[3] ? Number(args[3]) : undefined,
-        );
-        break;
-
-      case "continue":
-        if (args.length < 2) {
-          console.error("Usage: continue <swap-id> [fee-rate]");
-          process.exit(1);
-        }
-        await continueSwap(args[1], args[2] ? Number(args[2]) : undefined);
+        await handleSwapCommand(args.slice(1));
         break;
 
       case "list":
@@ -107,6 +109,64 @@ async function main() {
     }
     process.exit(1);
   }
+}
+
+async function handleSwapCommand(args: string[]) {
+  const [direction, action, ...rest] = args;
+
+  if (direction === "usdc-to-btc") {
+    if (action === "create") {
+      if (rest.length < 2) {
+        console.error(
+          "Usage: swap usdc-to-btc create <amount-usdc> <btc-address> [fee-rate]",
+        );
+        process.exit(1);
+      }
+      await createUsdcToBitcoinSwap(
+        rest[0],
+        rest[1],
+        rest[2] ? Number(rest[2]) : undefined,
+      );
+      return;
+    }
+
+    if (action === "continue") {
+      if (rest.length < 1) {
+        console.error("Usage: swap usdc-to-btc continue <swap-id> [fee-rate]");
+        process.exit(1);
+      }
+      await continueUsdcToBitcoinSwap(
+        rest[0],
+        rest[1] ? Number(rest[1]) : undefined,
+      );
+      return;
+    }
+  }
+
+  if (direction === "btc-to-usdc") {
+    if (action === "create") {
+      if (rest.length < 2) {
+        console.error(
+          "Usage: swap btc-to-usdc create <amount-sats> <evm-address>",
+        );
+        process.exit(1);
+      }
+      await createBitcoinToUsdcSwap(rest[0], rest[1]);
+      return;
+    }
+
+    if (action === "continue") {
+      if (rest.length < 1) {
+        console.error("Usage: swap btc-to-usdc continue <swap-id>");
+        process.exit(1);
+      }
+      await continueBitcoinToUsdcSwap(rest[0]);
+      return;
+    }
+  }
+
+  printUsage();
+  process.exit(1);
 }
 
 main();

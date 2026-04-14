@@ -12,9 +12,14 @@ const COLLAB_REFUND_STATES = new Set([
 export async function refundSwap(swapId: string) {
   const client = await buildClient();
 
-  const swap = asEvmToBtc(
-    await client.getSwap(swapId, { updateStorage: true }),
-  );
+  const storedSwap = await client.getSwap(swapId, { updateStorage: true });
+  if (storedSwap.direction !== "evm_to_bitcoin") {
+    throw new Error(
+      `Refund currently supports only USDC -> BTC swaps. Swap ${swapId} is ${storedSwap.direction}.`,
+    );
+  }
+
+  const swap = asEvmToBtc(storedSwap);
 
   console.log(`\nSwap ${swapId} is in state: ${swap.status}`);
 

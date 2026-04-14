@@ -1,4 +1,3 @@
-import type { EvmToBtcSwap } from "../client.js";
 import { buildClient } from "../client.js";
 
 export async function listSwaps() {
@@ -12,7 +11,7 @@ export async function listSwaps() {
 
   console.log(`\n--- Stored Swaps (${swaps.length}) ---\n`);
   for (const swap of swaps) {
-    const response = swap.response as EvmToBtcSwap;
+    const response = swap.response;
     const created = new Date(swap.storedAt).toLocaleString();
     console.log(`  ${swap.swapId}`);
     console.log(

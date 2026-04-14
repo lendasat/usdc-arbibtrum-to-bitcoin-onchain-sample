@@ -1,4 +1,3 @@
-import type { EvmToBtcSwap } from "../client.js";
 import { buildClient } from "../client.js";
 
 export async function recoverSwaps() {
@@ -9,7 +8,7 @@ export async function recoverSwaps() {
   console.log(`Found ${recovered.length} swap(s).`);
 
   for (const swap of recovered) {
-    const response = swap.response as EvmToBtcSwap;
+    const response = swap.response;
     console.log(
       `  ${swap.swapId} - ${response.status} (${response.direction})`,
     );

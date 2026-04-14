@@ -12,7 +12,7 @@ export async function loadOrCreateMnemonic(): Promise<string> {
   if (fs.existsSync(ENV_PATH)) {
     const content = fs.readFileSync(ENV_PATH, "utf-8");
     const match = content.match(/^MNEMONIC="?([^"]+)"?$/m);
-    if (match && match[1].trim()) {
+    if (match?.[1].trim()) {
       const mnemonic = match[1].trim();
       console.log("Loaded existing mnemonic from .env");
       return mnemonic;

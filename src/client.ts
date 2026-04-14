@@ -1,4 +1,5 @@
 import type {
+  BitcoinToEvmSwapResponse,
   EvmToBitcoinSwapResponse,
   GetSwapResponse,
 } from "@lendasat/lendaswap-sdk-pure";
@@ -10,9 +11,22 @@ export type EvmToBtcSwap = EvmToBitcoinSwapResponse & {
   direction: "evm_to_bitcoin";
 };
 
+export type BitcoinToEvmSwap = BitcoinToEvmSwapResponse & {
+  direction: "bitcoin_to_evm";
+};
+
+export type SupportedSwap = EvmToBtcSwap | BitcoinToEvmSwap;
+
 export function asEvmToBtc(swap: GetSwapResponse): EvmToBtcSwap {
   if (swap.direction !== "evm_to_bitcoin") {
     throw new Error(`Expected evm_to_bitcoin swap, got ${swap.direction}`);
+  }
+  return swap;
+}
+
+export function asBitcoinToEvm(swap: GetSwapResponse): BitcoinToEvmSwap {
+  if (swap.direction !== "bitcoin_to_evm") {
+    throw new Error(`Expected bitcoin_to_evm swap, got ${swap.direction}`);
   }
   return swap;
 }
@@ -60,17 +74,33 @@ export async function waitForSwapStatus(
   swapId: string,
   targetStatus: string,
   pollIntervalMs = 3000,
-): Promise<EvmToBtcSwap> {
+): Promise<SupportedSwap> {
+  return waitForAnySwapStatus(client, swapId, [targetStatus], pollIntervalMs);
+}
+
+export async function waitForAnySwapStatus(
+  client: Client,
+  swapId: string,
+  targetStatuses: string[],
+  pollIntervalMs = 3000,
+): Promise<SupportedSwap> {
   while (true) {
-    const swap = asEvmToBtc(
-      await client.getSwap(swapId, { updateStorage: true }),
-    );
+    const swap = await client.getSwap(swapId, { updateStorage: true });
 
     if (
-      swap.status === targetStatus ||
-      isStatusAfter(swap.status, targetStatus)
+      swap.direction !== "evm_to_bitcoin" &&
+      swap.direction !== "bitcoin_to_evm"
     ) {
-      return swap;
+      throw new Error(`Unsupported swap direction: ${swap.direction}`);
+    }
+
+    for (const targetStatus of targetStatuses) {
+      if (
+        swap.status === targetStatus ||
+        isStatusAfter(swap.status, targetStatus)
+      ) {
+        return swap;
+      }
     }
 
     if (TERMINAL_STATES.has(swap.status)) {

@@ -23,6 +23,13 @@ const USDC_ADDRESS = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831" as const;
 const PAYMASTER_ADDRESS = "0x0578cFB241215b77442a541325d6A4E6dFE700Ec" as const;
 const PIMLICO_BUNDLER_URL = "https://public.pimlico.io/v2/42161/rpc";
 
+type PimlicoUserOperationGasPriceResponse = {
+  standard: {
+    maxFeePerGas: `0x${string}`;
+    maxPriorityFeePerGas: `0x${string}`;
+  };
+};
+
 const eip2612Abi = [
   ...erc20Abi,
   {
@@ -173,9 +180,13 @@ export async function withdraw(destinationAddress: string, amountStr?: string) {
     paymaster,
     userOperation: {
       estimateFeesPerGas: async ({ bundlerClient }) => {
-        const result = (await bundlerClient.request({
-          method: "pimlico_getUserOperationGasPrice" as any,
-        })) as any;
+        const result = await bundlerClient.request<{
+          Method: "pimlico_getUserOperationGasPrice";
+          Parameters: undefined;
+          ReturnType: PimlicoUserOperationGasPriceResponse;
+        }>({
+          method: "pimlico_getUserOperationGasPrice",
+        });
         return {
           maxFeePerGas: hexToBigInt(result.standard.maxFeePerGas),
           maxPriorityFeePerGas: hexToBigInt(

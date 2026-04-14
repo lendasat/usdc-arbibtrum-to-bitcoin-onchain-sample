@@ -6,10 +6,10 @@ import {
   waitForUsdcDeposit,
 } from "../balance.js";
 import { asEvmToBtc, buildClient, waitForSwapStatus } from "../client.js";
-import { claimWithRetries } from "./claim.js";
+import { claimBitcoinWithRetries } from "./claim.js";
 import { printSwapStatus } from "./status.js";
 
-export async function createSwap(
+export async function createUsdcToBitcoinSwap(
   amountStr: string,
   btcAddress: string,
   feeRate = 1,
@@ -19,11 +19,11 @@ export async function createSwap(
   const evmAddress = client.getEvmAddress();
   const sourceAmount = parseUsdc(amountStr);
 
-  console.log(`\n--- LendaSwap: ${amountStr} USDC (Arbitrum) → BTC ---`);
+  console.log(`\n--- LendaSwap: USDC (Arbitrum) -> BTC On-chain ---`);
+  console.log(`USDC amount: ${amountStr}`);
   console.log(`Bitcoin destination: ${btcAddress}`);
   console.log(`Your deposit address: ${evmAddress}`);
 
-  // Step 1: Get quote and validate amount
   console.log(`\nFetching quote...`);
   const quote = await client.getQuote({
     sourceChain: Asset.USDC_ARBITRUM.chain as Chain,
@@ -41,7 +41,6 @@ export async function createSwap(
     `  Protocol fee:   ${quote.protocol_fee} sats (${(quote.protocol_fee_rate * 100).toFixed(2)}%)`,
   );
 
-  // exchange_rate is USDC per BTC, so: min_sats / 1e8 * rate = min USDC (human)
   const rate = Number(quote.exchange_rate);
   const minUsdc = BigInt(Math.ceil((quote.min_amount / 1e8) * rate * 1e6));
   const maxUsdc = BigInt(Math.ceil((quote.max_amount / 1e8) * rate * 1e6));
@@ -60,7 +59,6 @@ export async function createSwap(
     process.exit(1);
   }
 
-  // Step 2: Check balance and wait for deposit
   console.log(`\nChecking USDC balance on Arbitrum...`);
   const currentBalance = await getUsdcBalance(evmAddress);
   console.log(`Current balance: ${formatUsdc(currentBalance)} USDC`);
@@ -71,12 +69,11 @@ export async function createSwap(
     );
     console.log(`   Waiting for deposit...`);
     await waitForUsdcDeposit(evmAddress, sourceAmount);
-    console.log(); // newline after dots
+    console.log();
   }
 
-  console.log(`\nFunds available! Creating swap...`);
+  console.log(`\nFunds available. Creating swap...`);
 
-  // Step 2: Create the swap
   const result = await client.createSwap({
     source: Asset.USDC_ARBITRUM,
     target: Asset.BTC_ONCHAIN,
@@ -94,18 +91,15 @@ export async function createSwap(
     `You will receive: ~${targetAmount ? targetAmount.toLocaleString() : "?"} sats`,
   );
 
-  // Step 3: Fund the swap gaslessly
   console.log(`\nInitiating gasless funding...`);
   const { txHash: fundTxHash } = await client.fundSwapGasless(swapId);
-  console.log(`Swap funded! TX: ${fundTxHash}`);
+  console.log(`Swap funded. TX: ${fundTxHash}`);
 
-  // Step 4: Wait for server to fund Bitcoin HTLC
   console.log(`\nWaiting for Bitcoin to be locked...`);
   await waitForSwapStatus(client, swapId, "serverfunded");
-  console.log(`Bitcoin locked by server!`);
+  console.log(`Bitcoin locked by server.`);
 
-  // Step 5: Claim BTC (0-conf)
-  await claimWithRetries(client, swapId, btcAddress, feeRate);
+  await claimBitcoinWithRetries(client, swapId, btcAddress, feeRate);
 
   const finalSwap = asEvmToBtc(
     await client.getSwap(swapId, { updateStorage: true }),

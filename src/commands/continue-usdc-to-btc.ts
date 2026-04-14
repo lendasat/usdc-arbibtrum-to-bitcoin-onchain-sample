@@ -1,15 +1,16 @@
 import { asEvmToBtc, buildClient, waitForSwapStatus } from "../client.js";
-import { claimWithRetries } from "./claim.js";
+import { claimBitcoinWithRetries } from "./claim.js";
 import { printSwapStatus } from "./status.js";
 
-export async function continueSwap(swapId: string, feeRate = 1) {
+export async function continueUsdcToBitcoinSwap(swapId: string, feeRate = 1) {
   const client = await buildClient();
 
   const swap = asEvmToBtc(
     await client.getSwap(swapId, { updateStorage: true }),
   );
 
-  console.log(`\nResuming swap ${swapId} (status: ${swap.status})`);
+  console.log(`\nResuming USDC (Arbitrum) -> BTC swap ${swapId}`);
+  console.log(`Current status: ${swap.status}`);
 
   const btcAddress = swap.target_btc_address;
   if (!btcAddress) {
@@ -18,33 +19,30 @@ export async function continueSwap(swapId: string, feeRate = 1) {
 
   switch (swap.status) {
     case "pending": {
-      // Fund gaslessly, then continue through the rest
       console.log(`\nInitiating gasless funding...`);
       const { txHash } = await client.fundSwapGasless(swapId);
-      console.log(`Swap funded! TX: ${txHash}`);
+      console.log(`Swap funded. TX: ${txHash}`);
 
       console.log(`\nWaiting for Bitcoin to be locked...`);
       await waitForSwapStatus(client, swapId, "serverfunded");
-      console.log(`Bitcoin locked by server!`);
+      console.log(`Bitcoin locked by server.`);
 
-      await claimWithRetries(client, swapId, btcAddress, feeRate);
+      await claimBitcoinWithRetries(client, swapId, btcAddress, feeRate);
       break;
     }
 
     case "clientfundingseen":
     case "clientfunded": {
-      // Already funded, wait for server to lock BTC
       console.log(`\nWaiting for Bitcoin to be locked...`);
       await waitForSwapStatus(client, swapId, "serverfunded");
-      console.log(`Bitcoin locked by server!`);
+      console.log(`Bitcoin locked by server.`);
 
-      await claimWithRetries(client, swapId, btcAddress, feeRate);
+      await claimBitcoinWithRetries(client, swapId, btcAddress, feeRate);
       break;
     }
 
     case "serverfunded": {
-      // Server has locked BTC, claim it
-      await claimWithRetries(client, swapId, btcAddress, feeRate);
+      await claimBitcoinWithRetries(client, swapId, btcAddress, feeRate);
       break;
     }
 

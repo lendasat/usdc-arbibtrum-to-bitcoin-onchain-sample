@@ -1,7 +1,7 @@
 # USDC to Bitcoin PoC
 
 A CLI proof-of-concept for [LendaSwap](https://docs.satora.io/) that performs **gasless USDC (Arbitrum) to Bitcoin
-on-chain** atomic swaps.
+on-chain** atomic swaps, and **Bitcoin on-chain to USDC (Arbitrum)** swaps.
 
 The user never pays EVM gas fees. All EVM transactions are submitted by the LendaSwap relay server
 using [Permit2](https://github.com/Uniswap/permit2) signatures.
@@ -39,11 +39,20 @@ cp .env.example .env
 # Show your internal wallet address and USDC balance
 npm start -- address
 
-# Create a swap: send 100 USDC to receive BTC
-npm start -- swap 100 bc1q...
+# Create a swap: send 100 USDC to receive BTC on-chain
+npm start -- swap usdc-to-btc create 100 bc1q...
 
 # With custom Bitcoin fee rate (default: 1 sat/vB)
-npm start -- swap 100 bc1q... 5
+npm start -- swap usdc-to-btc create 100 bc1q... 5
+
+# Resume a USDC -> BTC swap
+npm start -- swap usdc-to-btc continue <swap-id>
+
+# Create a swap: send BTC on-chain to receive USDC on Arbitrum
+npm start -- swap btc-to-usdc create 150000 0xAbCd...
+
+# Resume a BTC -> USDC swap
+npm start -- swap btc-to-usdc continue <swap-id>
 
 # List all stored swaps
 npm start -- list
@@ -58,27 +67,28 @@ npm start -- refund <swap-id>
 npm start -- recover
 ```
 
-## Swap flow
+## USDC -> BTC flow
 
 ```
-$ npm start -- swap 100 bc1qMyBitcoinAddress
+$ npm start -- swap usdc-to-btc create 100 bc1qMyBitcoinAddress
 
---- LendaSwap: 100 USDC (Arbitrum) -> BTC ---
+--- LendaSwap: USDC (Arbitrum) -> BTC On-chain ---
+USDC amount: 100
 Bitcoin destination: bc1qMyBitcoinAddress
 Your deposit address: 0xAbCd...
 
 Checking USDC balance on Arbitrum...
 Current balance: 100.0 USDC
 
-Funds available! Creating swap...
+Funds available. Creating swap...
 Swap created: a1b2c3d4-...
 You will receive: ~145000 sats
 
 Initiating gasless funding...
-Swap funded! TX: 0x...
+Swap funded. TX: 0x...
 
 Waiting for Bitcoin to be locked...
-Bitcoin locked by server!
+Bitcoin locked by server.
 
 Claiming Bitcoin (0-conf)...
 
@@ -90,6 +100,37 @@ Claiming Bitcoin (0-conf)...
   Source:    100.0 USDC
   Target:    145000 sats
   BTC Claim: abc123...
+```
+
+## BTC -> USDC flow
+
+```
+$ npm start -- swap btc-to-usdc create 150000 0xAbCdMyArbitrumAddress
+
+--- LendaSwap: BTC On-chain -> USDC (Arbitrum) ---
+BTC amount: 150000 sats
+USDC destination: 0xAbCdMyArbitrumAddress
+
+Fetching quote...
+
+--- Quote ---
+  You send:       150000 sats
+  You receive:    ~123.45 USDC
+
+Creating swap...
+Swap created: a1b2c3d4-...
+Send exactly 150000 sats to: bc1p...
+Expected USDC: ~123.45 USDC
+
+Waiting for BTC deposit...
+BTC deposit detected.
+
+Waiting for USDC to be funded on Arbitrum...
+USDC funded by server.
+
+Claiming USDC on Arbitrum...
+
+=== Swap Complete ===
 ```
 
 ## Refunds
