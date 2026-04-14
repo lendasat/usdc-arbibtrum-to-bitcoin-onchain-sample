@@ -60,8 +60,14 @@ npm start -- list
 # Check swap status
 npm start -- status <swap-id>
 
-# Refund a swap
+# Refund a USDC -> BTC swap
 npm start -- refund <swap-id>
+
+# Refund a BTC -> USDC swap to a BTC address
+npm start -- refund <swap-id> bc1qrefund...
+
+# With custom BTC fee rate
+npm start -- refund <swap-id> bc1qrefund... 5
 
 # Recover swaps from server (useful after restoring from mnemonic)
 npm start -- recover
@@ -135,7 +141,7 @@ Claiming USDC on Arbitrum...
 
 ## Refunds
 
-If a swap fails, use the `refund` command:
+If a `USDC -> BTC` swap fails, use the `refund` command:
 
 ```bash
 npm start -- refund <swap-id>
@@ -147,6 +153,13 @@ need to wait for the HTLC timelock to expire and you don't pay gas.
 **Important:** Refunded funds are returned to the **internal wallet** (the EVM address derived from your mnemonic), *
 *not** to the original wallet that sent the USDC. You can check the internal wallet balance with `npm start -- address`
 and transfer the funds out manually.
+
+For `BTC -> USDC`, refunds are on-chain Bitcoin refunds after the BTC HTLC timelock expires. Provide the BTC address
+that should receive the refunded sats:
+
+```bash
+npm start -- refund <swap-id> bc1qrefund...
+```
 
 ## Recovery
 

@@ -27,7 +27,8 @@ Commands:
                                            Resume a BTC on-chain -> USDC swap
   list                                     List all stored swaps
   status <swap-id>                         Check swap status
-  refund <swap-id>                         Refund a swap
+  refund <swap-id> [btc-address] [fee-rate]
+                                           Refund a swap
   withdraw <address> [amount]              Send USDC to another wallet (default: full balance)
   recover                                  Recover swaps from server
   address                                  Show wallet address and balance
@@ -42,6 +43,7 @@ Examples:
   npm start -- list
   npm start -- status <swap-id>
   npm start -- refund <swap-id>
+  npm start -- refund <swap-id> bc1qrefund... 5
 `);
 }
 
@@ -75,10 +77,14 @@ async function main() {
 
       case "refund":
         if (args.length < 2) {
-          console.error("Usage: refund <swap-id>");
+          console.error("Usage: refund <swap-id> [btc-address] [fee-rate]");
           process.exit(1);
         }
-        await refundSwap(args[1]);
+        await refundSwap(
+          args[1],
+          args[2],
+          args[3] ? Number(args[3]) : undefined,
+        );
         break;
 
       case "withdraw":
